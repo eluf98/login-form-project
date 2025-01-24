@@ -1,10 +1,18 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import axios from 'axios';
+import { Form, FormGroup, Label, Input, Button, Alert } from 'reactstrap';
 
-const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [termsAccepted, setTermsAccepted] = useState(false);
+const initialFormData = {
+  email: '',
+  password: '',
+  termsAccepted: false,
+};
+
+export default function Login(props) {
+  const { onLoginSuccess } = props;
+  const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({ email: '', password: '', terms: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateEmail = (email) => {
     const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
@@ -16,74 +24,97 @@ const Login = () => {
     return regex.test(password);
   };
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    const newState = { ...formData, [name]: value };
+    setFormData(newState);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     let formValid = true;
     let newErrors = { email: '', password: '', terms: '' };
 
-    if (!validateEmail(email)) {
+    if (!validateEmail(formData.email)) {
       newErrors.email = 'Geçerli bir email adresi giriniz';
       formValid = false;
     }
 
-    if (!validatePassword(password)) {
+    if (!validatePassword(formData.password)) {
       newErrors.password = 'Şifre en az 8 karakter, bir harf ve bir rakam içermelidir';
       formValid = false;
     }
 
-    if (!termsAccepted) {
+    if (!formData.termsAccepted) {
       newErrors.terms = 'Şartları kabul etmeniz gerekmektedir';
       formValid = false;
     }
 
     setErrors(newErrors);
+
     if (formValid) {
-      // Form geçerli ise Success sayfasına yönlendirme veya başka işlem yapılabilir.
-      console.log('Form başarılı!');
+      axios
+        .post('https://reqres.in/api/users', formData)
+        .then((res) => {
+          console.log(res);
+          onLoginSuccess(res.data); // Success callback
+          setFormData(initialFormData);
+        })
+        .catch((err) => console.log(err))
+        .finally(() => setIsSubmitting(false));
+    } else {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Email</label>
-          <input
+      <h2>Login Form</h2>
+      <Form onSubmit={handleSubmit}>
+        <FormGroup>
+          <Label for="email">Email:</Label>
+          <Input
+            id="email"
+            name="email"
+            placeholder="Email address"
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={handleChange}
+            value={formData.email}
           />
-          {errors.email && <p>{errors.email}</p>}
-        </div>
+          {errors.email && <Alert color="danger">{errors.email}</Alert>}
+        </FormGroup>
 
-        <div>
-          <label>Şifre</label>
-          <input
+        <FormGroup>
+          <Label for="password">Password:</Label>
+          <Input
+            id="password"
+            name="password"
+            placeholder="Password"
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={handleChange}
+            value={formData.password}
           />
-          {errors.password && <p>{errors.password}</p>}
-        </div>
+          {errors.password && <Alert color="danger">{errors.password}</Alert>}
+        </FormGroup>
 
-        <div>
-          <label>
-            <input
+        <FormGroup>
+          <Label>
+            <Input
               type="checkbox"
-              checked={termsAccepted}
-              onChange={() => setTermsAccepted(!termsAccepted)}
+              name="termsAccepted"
+              checked={formData.termsAccepted}
+              onChange={() => setFormData({ ...formData, termsAccepted: !formData.termsAccepted })}
             />
-            Şartları kabul ediyorum
-          </label>
-          {errors.terms && <p>{errors.terms}</p>}
-        </div>
+            Accept Terms and Conditions
+          </Label>
+          {errors.terms && <Alert color="danger">{errors.terms}</Alert>}
+        </FormGroup>
 
-        <button type="submit" disabled={!validateEmail(email) || !validatePassword(password) || !termsAccepted}>
-          Giriş Yap
-        </button>
-      </form>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Submitting...' : 'Login'}
+        </Button>
+      </Form>
     </div>
   );
-};
-
-export default Login;
+}

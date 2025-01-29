@@ -24,7 +24,12 @@ export default function LoginPage  ()  {
             alert("lütfen formu tam doldurunuz")
         }
     }
-    
+
+
+
+
+
+
     return (
         <form onSUbmit={handleSubmit}>
             <div>

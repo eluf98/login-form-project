@@ -1,11 +1,7 @@
-import React from 'react';
-
 const Success = () => {
   return (
-    <div>
-      <h1>Giriş Başarılı!</h1>
-    </div>
-  );
-};
+    <div data-testid="success-text">Login successful</div>
+  )
+}
 
-export default Success;
+export default Success
